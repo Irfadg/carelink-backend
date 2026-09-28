@@ -2,7 +2,7 @@
 
 import { Router } from "express";
 
-import { signup } from "./auth.controller";
+import { signup, login } from "./auth.controller";
 
 
 const router = Router();
@@ -17,6 +17,17 @@ const router = Router();
 router.post(
     "/signup",
     signup
+);
+
+/**
+ * POST /auth/signup
+ *
+ * When this endpoint is called,
+ * Express executes the signup controller.
+ */
+router.post(
+    "/login",
+    login
 );
 
 

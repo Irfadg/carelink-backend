@@ -34,6 +34,8 @@ export async function findUserByEmail(email: string) {
 }
 
 
+
+
 /**
  * Create a new user in the users table.
  *
@@ -42,6 +44,54 @@ export async function findUserByEmail(email: string) {
  * after validation and password hashing.
  */
 export async function createUser(
+    name: string,
+    email: string,
+    passwordHash: string,
+    role: string
+) {
+
+    // Insert the new user into PostgreSQL.
+    const result = await pool.query(
+        `
+        INSERT INTO users (
+            name,
+            email,
+            password_hash,
+            role
+        )
+        VALUES ($1, $2, $3, $4)
+
+        -- Return the newly created user.
+        -- We intentionally DO NOT return password_hash.
+        RETURNING
+            id,
+            name,
+            email,
+            role,
+            is_verified,
+            created_at
+        `,
+        [
+            name,
+            email,
+            passwordHash,
+            role
+        ]
+    );
+
+    // Return the newly created user.
+    return result.rows[0];
+}
+
+
+/**
+ * Create a new user in the users table.
+ *
+ * Why:
+ * This will eventually be called during signup
+ * after validation and password hashing.
+ */
+export async function loginUser(
     name: string,
     email: string,
     passwordHash: string,

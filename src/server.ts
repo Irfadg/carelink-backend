@@ -2,6 +2,9 @@ import express from "express";
 
 import authRoutes from "./modules/auth/auth.routes";
 
+import { verifyToken, AuthenticatedRequest } from "./common/middleware/verifyToken";
+import { requireRole } from "./common/middleware/requireRole";
+
 
 const app = express();
 
@@ -36,6 +39,10 @@ app.get(
         });
     }
 );
+
+
+
+
 
 
 // Start the server.

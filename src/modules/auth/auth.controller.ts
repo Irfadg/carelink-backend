@@ -1,89 +1,25 @@
 import { Request, Response } from "express";
+import { ZodError } from "zod";
 
-import { signupUser } from "./auth.service";
+import { signupUser, loginUser } from "./auth.service";
+import { signupSchema,loginSchema } from "./auth.schema";
 
-
-/**
- * POST /auth/signup
- *
- * Receives signup data from the client,
- * validates the request and calls the service.
- */
 export async function signup(
     req: Request,
     res: Response
 ) {
-
     try {
+        // Validate and transform the request body.
+        const data = signupSchema.parse(req.body);
 
-        // Get data sent by the client.
-        const {
-            name,
-            email,
-            password,
-            role
-        } = req.body;
-
-
-        // Check required fields.
-        if (
-            !name ||
-            !email ||
-            !password ||
-            !role
-        ) {
-            return res.status(400).json({
-                error:
-                    "Name, email, password and role are required"
-            });
-        }
-
-
-        // Allowed roles.
-        const allowedRoles = [
-            "patient",
-            "caregiver",
-            "doctor"
-        ];
-
-
-        // Check whether the requested role is valid.
-        if (!allowedRoles.includes(role)) {
-            return res.status(400).json({
-                error: "Invalid role"
-            });
-        }
-
-
-        // Basic password validation.
-        if (password.length < 6) {
-            return res.status(400).json({
-                error:
-                    "Password must be at least 6 characters"
-            });
-        }
-
-
-        // Call the service.
-        //
-        // The controller does NOT:
-        // - hash the password
-        // - write SQL
-        // - check duplicate users
-        //
-        // Those responsibilities belong to the service
-        // and repository.
+        // data now contains validated values.
         const user = await signupUser(
-            name,
-            email,
-            password,
-            role
+            data.name,
+            data.email,
+            data.password,
+            data.role
         );
 
-
-        // Return the newly created user.
-        //
-        // password/password_hash is NOT returned.
         return res.status(201).json({
             message: "User created successfully",
             user
@@ -91,14 +27,76 @@ export async function signup(
 
     } catch (error) {
 
-        console.error(error);
+        // Handle Zod validation errors.
+        if (error instanceof ZodError) {
+            return res.status(400).json({
+                error: "Validation failed",
+                details: error.issues.map((issue) => ({
+                    field: issue.path.join("."),
+                    message: issue.message
+                }))
+            });
+        }
 
+        console.error(error);
 
         return res.status(400).json({
             error:
                 error instanceof Error
                     ? error.message
                     : "Signup failed"
+        });
+    }
+
+
+}
+
+/**
+ * POST /auth/login
+ *
+ * Handles an existing user's login request.
+ */
+export async function login(
+    req: Request,
+    res: Response
+) {
+    try {
+        // Validate and transform the request body.
+        const data = loginSchema.parse(req.body);
+
+        // Send the validated credentials to the service.
+        const result = await loginUser(
+            data.email,
+            data.password
+        );
+
+        // Return the user and JWT.
+        return res.status(200).json({
+            message: "Login successful",
+            user: result.user,
+            token: result.token
+        });
+
+    } catch (error) {
+
+        // Handle Zod validation errors.
+        if (error instanceof ZodError) {
+            return res.status(400).json({
+                error: "Validation failed",
+                details: error.issues.map((issue) => ({
+                    field: issue.path.join("."),
+                    message: issue.message
+                }))
+            });
+        }
+
+        console.error(error);
+
+        return res.status(401).json({
+            error:
+                error instanceof Error
+                    ? error.message
+                    : "Login failed"
         });
     }
 }
