@@ -2,8 +2,9 @@
 
 import { Router } from "express";
 
-import { signup, login } from "./auth.controller";
+import { signup, login, getMe } from "./auth.controller";
 
+import { verifyToken } from "../../common/middleware/verifyToken";
 
 const router = Router();
 
@@ -28,6 +29,19 @@ router.post(
 router.post(
     "/login",
     login
+);
+
+
+/**
+ * GET /auth/me
+ *
+ * Fetches the currently authenticated user's details.
+ */
+ 
+router.get(
+    "/me",
+    verifyToken,
+    getMe
 );
 
 

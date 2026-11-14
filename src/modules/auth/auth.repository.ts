@@ -84,49 +84,26 @@ export async function createUser(
 }
 
 
-/**
- * Create a new user in the users table.
- *
- * Why:
- * This will eventually be called during signup
- * after validation and password hashing.
- */
-export async function loginUser(
-    name: string,
-    email: string,
-    passwordHash: string,
-    role: string
-) {
 
-    // Insert the new user into PostgreSQL.
+/**
+ * Find a user using their unique user ID.
+ * Returns user details without exposing the password hash.
+ */
+export async function findUserById(userId: number) {
     const result = await pool.query(
         `
-        INSERT INTO users (
-            name,
-            email,
-            password_hash,
-            role
-        )
-        VALUES ($1, $2, $3, $4)
-
-        -- Return the newly created user.
-        -- We intentionally DO NOT return password_hash.
-        RETURNING
+        SELECT
             id,
             name,
             email,
             role,
             is_verified,
             created_at
+        FROM users
+        WHERE id = $1
         `,
-        [
-            name,
-            email,
-            passwordHash,
-            role
-        ]
+        [userId]
     );
 
-    // Return the newly created user.
-    return result.rows[0];
+    return result.rows[0] ?? null;
 }

@@ -5,8 +5,8 @@ import jwt from "jsonwebtoken";
 import {
     findUserByEmail,
     createUser,
+    findUserById,
 } from "./auth.repository";
-import { requireRole } from "../../common/middleware/requireRole";
 
 
 /**
@@ -113,6 +113,7 @@ export async function loginUser(
         normalizedEmail
     );
 
+
     if (!user) {
         throw new Error("Invalid email or password");
     }
@@ -139,8 +140,32 @@ export async function loginUser(
         user.role
     );
 
+
+
     return {
         user: safeUser,
         token
     };
+}
+
+
+/**
+ * Get the currently authenticated user's details.
+ *
+ * Why:
+ * The user ID comes from the verified JWT token.
+ * We use it to fetch the latest user information from the database.
+ */
+export async function getCurrentUser(userId: number) {
+
+    // Find the user using their ID.
+    const user = await findUserById(userId);
+
+    // If the user no longer exists, return an error.
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    // Return user details.
+    return user;
 }

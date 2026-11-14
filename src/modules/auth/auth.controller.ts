@@ -1,8 +1,24 @@
+
+
+
 import { Request, Response } from "express";
 import { ZodError } from "zod";
 
-import { signupUser, loginUser } from "./auth.service";
-import { signupSchema,loginSchema } from "./auth.schema";
+import {
+    signupUser,
+    loginUser,
+    getCurrentUser
+} from "./auth.service";
+
+import {
+    signupSchema,
+    loginSchema
+} from "./auth.schema";
+
+import { AuthenticatedRequest } from "../../common/middleware/verifyToken";
+
+
+
 
 export async function signup(
     req: Request,
@@ -97,6 +113,45 @@ export async function login(
                 error instanceof Error
                     ? error.message
                     : "Login failed"
+        });
+    }
+}
+
+
+/**
+ * GET /auth/me
+ *
+ * Fetch the currently authenticated user's details.
+ */
+export async function getMe(
+    req: AuthenticatedRequest,
+    res: Response
+) {
+    try {
+        // Get the user ID from the verified JWT token.
+        const userId = req.user!.userId;
+
+        // Fetch the latest user details from the database.
+        const user = await getCurrentUser(userId);
+
+        // Return the authenticated user's details.
+        return res.status(200).json({
+            message: "User details fetched successfully",
+            user
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        if (error instanceof Error && error.message === "User not found") {
+            return res.status(404).json({
+                error: "User not found"
+            });
+        }
+
+        return res.status(500).json({
+            error: "Failed to fetch user details"
         });
     }
 }
