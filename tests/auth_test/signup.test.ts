@@ -159,7 +159,7 @@ describe("POST /auth/signup", () => {
                 ]]
             );
         } finally {
-            await pool.end();
+         //   await pool.end();
         }
     });
 });

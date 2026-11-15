@@ -119,6 +119,6 @@ afterAll(async () => {
             [testEmail]
         );
     } finally {
-        await pool.end();
+      //  await pool.end();
     }
 });
